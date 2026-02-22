@@ -1,0 +1,41 @@
+name: Update Publications Data
+
+on:
+  push:
+    paths:
+      - 'markdown_generator/publications.csv'
+      - 'markdown_generator/publications.py'
+      - '.github/workflows/update_publications.yml'
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-publications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate publication markdown files
+        run: python3 markdown_generator/publications.py markdown_generator/publications.csv
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain _publications)" ]]; then
+            git add _publications
+            git commit -m "Auto-update generated publications"
+            git push
+          else
+            echo "No publication changes detected"
+          fi
